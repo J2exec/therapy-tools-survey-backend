@@ -1,0 +1,145 @@
+name: Deploy Azure Function
+
+on:
+  push:
+    branches:
+      - main
+      - production
+  pull_request:
+    branches:
+      - main
+
+env:
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'
+  NODE_VERSION: '20.x'
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 'Checkout GitHub Action'
+      uses: actions/checkout@v4
+
+    - name: Setup Node ${{ env.NODE_VERSION }} Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 'Install dependencies'
+      shell: bash
+      run: |
+        npm ci
+
+    - name: 'Run linting'
+      shell: bash
+      run: |
+        # Add linting when ESLint is configured
+        echo "Linting step - configure ESLint in future"
+
+    - name: 'Run tests'
+      shell: bash
+      run: |
+        npm test
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+    
+    steps:
+    - name: 'Checkout GitHub Action'
+      uses: actions/checkout@v4
+
+    - name: Setup Node ${{ env.NODE_VERSION }} Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 'Install dependencies and build'
+      shell: bash
+      run: |
+        npm ci
+        npm run build --if-present
+
+    - name: 'Deploy to Azure Functions - Staging'
+      if: github.ref == 'refs/heads/main'
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME_STAGING }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE_STAGING }}
+
+    - name: 'Deploy to Azure Functions - Production'
+      if: github.ref == 'refs/heads/production'
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME_PRODUCTION }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE_PRODUCTION }}
+
+    - name: 'Run Health Check - Staging'
+      if: github.ref == 'refs/heads/main'
+      shell: bash
+      run: |
+        echo "Waiting for deployment to complete..."
+        sleep 30
+        
+        HEALTH_URL="https://${{ secrets.AZURE_FUNCTIONAPP_NAME_STAGING }}.azurewebsites.net/api/health-check"
+        echo "Testing health check at: $HEALTH_URL"
+        
+        for i in {1..5}; do
+          if curl -f -s "$HEALTH_URL" > /dev/null; then
+            echo "✅ Health check passed on attempt $i"
+            break
+          else
+            echo "⏳ Health check failed on attempt $i, retrying in 10 seconds..."
+            sleep 10
+          fi
+          
+          if [ $i -eq 5 ]; then
+            echo "❌ Health check failed after 5 attempts"
+            exit 1
+          fi
+        done
+
+    - name: 'Run Health Check - Production'
+      if: github.ref == 'refs/heads/production'
+      shell: bash
+      run: |
+        echo "Waiting for deployment to complete..."
+        sleep 30
+        
+        HEALTH_URL="https://${{ secrets.AZURE_FUNCTIONAPP_NAME_PRODUCTION }}.azurewebsites.net/api/health-check"
+        echo "Testing health check at: $HEALTH_URL"
+        
+        for i in {1..5}; do
+          if curl -f -s "$HEALTH_URL" > /dev/null; then
+            echo "✅ Health check passed on attempt $i"
+            break
+          else
+            echo "⏳ Health check failed on attempt $i, retrying in 10 seconds..."
+            sleep 10
+          fi
+          
+          if [ $i -eq 5 ]; then
+            echo "❌ Health check failed after 5 attempts"
+            exit 1
+          fi
+        done
+
+    - name: 'Notify deployment success'
+      if: success()
+      shell: bash
+      run: |
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          echo "🚀 Successfully deployed to STAGING environment"
+          echo "Health check: https://${{ secrets.AZURE_FUNCTIONAPP_NAME_STAGING }}.azurewebsites.net/api/health-check"
+          echo "Survey endpoint: https://${{ secrets.AZURE_FUNCTIONAPP_NAME_STAGING }}.azurewebsites.net/api/survey-submission"
+        elif [ "${{ github.ref }}" == "refs/heads/production" ]; then
+          echo "🚀 Successfully deployed to PRODUCTION environment"
+          echo "Health check: https://${{ secrets.AZURE_FUNCTIONAPP_NAME_PRODUCTION }}.azurewebsites.net/api/health-check"
+          echo "Survey endpoint: https://${{ secrets.AZURE_FUNCTIONAPP_NAME_PRODUCTION }}.azurewebsites.net/api/survey-submission"
+        fi

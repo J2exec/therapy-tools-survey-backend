@@ -1,0 +1,32 @@
+{
+  "name": "Dr. Sarah Smith",
+  "email": "sarah.smith@example.com",
+  "surveyData": {
+    "setting": "setting_mixed",
+    "profession": "role_therapist", 
+    "populations": ["pop_adults", "pop_couples"],
+    "interests": ["interest_art", "interest_feelings_wheel"],
+    "frequency": "freq_weekly",
+    "modalities": ["mod_cbt", "mod_solutions"],
+    "profession_other": "",
+    "modality_other": ""
+  },
+  "recommendations": ["Creative Canvas", "Feelings Wheel"],
+  "selectedTags": [
+    "setting_mixed", 
+    "role_therapist", 
+    "pop_adults", 
+    "pop_couples", 
+    "interest_art", 
+    "interest_feelings_wheel", 
+    "freq_weekly", 
+    "mod_cbt", 
+    "mod_solutions"
+  ],
+  "customResponses": {
+    "role_other": "",
+    "mod_other": ""
+  },
+  "timestamp": "2025-09-01T12:00:00.000Z",
+  "completed": true
+}
