@@ -1,0 +1,27 @@
+{
+  "name": "therapy-tools-survey-hub",
+  "version": "1.0.0",
+  "description": "Azure Functions v4 backend for therapy tools survey submission",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "build": "npm run clean && npm run copy",
+    "clean": "rimraf dist",
+    "copy": "copyfiles -u 1 'src/**/*' dist/",
+    "start": "func start",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.0",
+    "@azure/data-tables": "^13.2.2",
+    "joi": "^17.13.3",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "azure-functions-core-tools": "^4.0.5801",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
