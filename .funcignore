@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build and maps
+*.js.map
+*.ts.map
+
+# Git and version control
+.git*
+.gitignore
+
+# IDE
+.vscode
+
+# Local settings
+local.settings.json
+
+# Testing
+test/
+.nyc_output
+coverage
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.test
+
+# Documentation and system files
+README.md
+BACKEND_SURVEY_REQUIREMENTS.md
+.DS_Store
+Thumbs.db
